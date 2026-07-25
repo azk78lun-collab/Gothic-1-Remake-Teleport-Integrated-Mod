@@ -99,15 +99,7 @@ Build a clean V4 package after native compilation:
 
 Original source in this repository is released under **GPL-3.0**. UE4SS and its bundled components retain their own **MIT License**. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-### Support The Developer
 
-USDT (TRON) only:
-
-```text
-TWWGexPoyv46BUAxjuXkwAVx8JBPRgTtFJ
-```
-
-![USDT TRON support QR code](src/assets/support_usdt_tron.png)
 
 ---
 
@@ -201,12 +193,3 @@ TWWGexPoyv46BUAxjuXkwAVx8JBPRgTtFJ
 
 本仓库原创源码采用 **GPL-3.0** 发布。UE4SS 及其自带组件继续采用其自身的 **MIT License**，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
-### 支持开发者
-
-仅支持 USDT（TRON）：
-
-```text
-TWWGexPoyv46BUAxjuXkwAVx8JBPRgTtFJ
-```
-
-![USDT TRON 打赏二维码](src/assets/support_usdt_tron.png)
