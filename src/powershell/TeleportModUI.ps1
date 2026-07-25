@@ -5105,62 +5105,16 @@ $guideBox.Text = @"
 【导入导出坐标】
   在瞬移节点页面下方可导出/导入所有节点为 txt 文件。
 
-【支持与打赏】
-  向下滚动到本页最底部，可查看 USDT（TRON）二维码并复制钱包地址。
 "@
 
-$guideSupportTitle = New-Object System.Windows.Forms.Label
-$guideSupportTitle.Text = "支持开发者（仅 USDT / TRON）"
-$guideSupportTitle.AutoSize = $false
-$guideSupportTitle.Height = 28
-$guideSupportTitle.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
-$guideSupportTitle.Font = New-Object System.Drawing.Font("微软雅黑", 11, [System.Drawing.FontStyle]::Bold)
-
-$guideSupportImage = New-Object System.Windows.Forms.PictureBox
-$guideSupportImage.Size = New-Object System.Drawing.Size(400, 711)
-$guideSupportImage.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::Zoom
-$supportImagePath = Join-Path $scriptDir "support_usdt_tron.png"
-if (Test-Path -LiteralPath $supportImagePath) {
-    try { $guideSupportImage.Image = [System.Drawing.Image]::FromFile($supportImagePath) } catch {}
-}
-
-$guideSupportAddressLabel = New-Object System.Windows.Forms.Label
-$guideSupportAddressLabel.Text = "钱包地址"
-$guideSupportAddressLabel.AutoSize = $true
-
-$guideSupportAddressBox = New-Object System.Windows.Forms.TextBox
-$guideSupportAddressBox.Text = "TWWGexPoyv46BUAxjuXkwAVx8JBPRgTtFJ"
-$guideSupportAddressBox.ReadOnly = $true
-$guideSupportAddressBox.Font = New-Object System.Drawing.Font("Consolas", 9)
-$guideSupportAddressBox.BackColor = [System.Drawing.Color]::White
-
-$guideSupportCopyButton = New-UiButton "复制 USDT 地址" 150
-
-function Layout-GuideSupport {
+function Layout-GuideContent {
     $contentWidth = [Math]::Max(480, $guideScrollPanel.ClientSize.Width)
     $guideBox.Width = [Math]::Max(460, $contentWidth - 20)
-
-    $cardWidth = [Math]::Min(560, [Math]::Max(390, $contentWidth - 20))
-    $cardLeft = [Math]::Max(10, [int](($contentWidth - $cardWidth) / 2))
-    $imageTop = $guideBox.Bottom + 24
-    $guideSupportTitle.Location = [System.Drawing.Point]::new([int]$cardLeft, [int]$imageTop)
-    $guideSupportTitle.Width = $cardWidth
-    $guideSupportImage.Left = $cardLeft + [int](($cardWidth - $guideSupportImage.Width) / 2)
-    $guideSupportImage.Top = $guideSupportTitle.Bottom + 8
-    $guideSupportAddressLabel.Location = [System.Drawing.Point]::new([int]$cardLeft, [int]($guideSupportImage.Bottom + 18))
-    $guideSupportAddressBox.Location = [System.Drawing.Point]::new([int]$cardLeft, [int]($guideSupportAddressLabel.Bottom + 5))
-    $guideSupportAddressBox.Width = $cardWidth - $guideSupportCopyButton.Width - 10
-    $guideSupportCopyButton.Location = [System.Drawing.Point]::new([int]($guideSupportAddressBox.Right + 10), [int]($guideSupportAddressBox.Top - 2))
-    $guideScrollPanel.AutoScrollMinSize = [System.Drawing.Size]::new(0, [int]($guideSupportCopyButton.Bottom + 32))
+    $guideScrollPanel.AutoScrollMinSize = [System.Drawing.Size]::new(0, [int]($guideBox.Bottom + 24))
 }
 
 $guideScrollPanel.Controls.AddRange(@(
-    $guideBox,
-    $guideSupportTitle,
-    $guideSupportImage,
-    $guideSupportAddressLabel,
-    $guideSupportAddressBox,
-    $guideSupportCopyButton
+    $guideBox
 ))
 
 $guideScrollByWheel = {
@@ -5171,12 +5125,10 @@ $guideScrollByWheel = {
     $guideScrollPanel.AutoScrollPosition = New-Object System.Drawing.Point(0, $targetY)
 }
 $guideBox.Add_MouseWheel($guideScrollByWheel)
-$guideSupportImage.Add_MouseWheel($guideScrollByWheel)
-$guideSupportAddressBox.Add_MouseWheel($guideScrollByWheel)
 $guideScrollPanel.Add_SizeChanged({
-    Layout-GuideSupport
+    Layout-GuideContent
 })
-Layout-GuideSupport
+Layout-GuideContent
 
 $guideCoordPanel = New-Object System.Windows.Forms.Panel
 $guideCoordPanel.Dock = "Fill"
@@ -5246,16 +5198,6 @@ $guideVideoLink.Add_LinkClicked({
     $psi.FileName = "https://space.bilibili.com/258597412"
     $psi.UseShellExecute = $true
     [System.Diagnostics.Process]::Start($psi) | Out-Null
-})
-
-$guideSupportCopyButton.Add_Click({
-    try {
-        [System.Windows.Forms.Clipboard]::SetText($guideSupportAddressBox.Text)
-        $guideSupportAddressBox.SelectAll()
-        Set-Status "已复制 USDT (TRON) 地址。"
-    } catch {
-        Set-Status ("复制 USDT (TRON) 地址失败: {0}" -f $_.Exception.Message)
-    }
 })
 
 $guideExportCoordsButton.Add_Click({
@@ -5339,8 +5281,6 @@ $script:guideTextEn = @"
   - Core Reload reloads the teleport core only.
   - Full Reload sends Ctrl+R to UE4SS.
 
-[SUPPORT]
-  - Scroll to the bottom of this page for the USDT (TRON) QR code and a copyable wallet address.
 "@
 $script:highlightInfoTextZh = $highlightInfoLabel.Text
 $script:highlightInfoTextEn = @"
@@ -5497,10 +5437,6 @@ $script:uiTextEn = @{
     "全部展开" = "Expand All"
     "全部折叠" = "Collapse All"
     "选择左侧任务查看攻略内容。" = "Select a quest on the left to view its walkthrough."
-    "支持开发者（仅 USDT / TRON）" = "Support the developer (USDT / TRON only)"
-    "钱包地址" = "Wallet address"
-    "复制 USDT 地址" = "Copy USDT Address"
-    "已复制 USDT (TRON) 地址。" = "USDT (TRON) address copied."
     "护眼颜色" = "Theme"
     "窗口置顶" = "Pin Window"
     "取消置顶" = "Unpin"

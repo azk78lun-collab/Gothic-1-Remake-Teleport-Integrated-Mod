@@ -2,11 +2,6 @@
 
 ## 哥特王朝重制版：瞬移与整合 Mod
 
-<p align="center">
-  <a href="#english"><kbd>English</kbd></a>
-  <a href="#中文"><kbd>中文</kbd></a>
-</p>
-
 ---
 
 ## English
@@ -99,8 +94,6 @@ Build a clean V4 package after native compilation:
 
 Original source in this repository is released under **GPL-3.0**. UE4SS and its bundled components retain their own **MIT License**. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-
-
 ---
 
 ## 中文
@@ -192,4 +185,3 @@ Original source in this repository is released under **GPL-3.0**. UE4SS and its 
 ### 许可证
 
 本仓库原创源码采用 **GPL-3.0** 发布。UE4SS 及其自带组件继续采用其自身的 **MIT License**，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
-
