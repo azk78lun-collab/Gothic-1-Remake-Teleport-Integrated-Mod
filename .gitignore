@@ -1,0 +1,37 @@
+# Build and release output
+/artifacts/
+/dist/
+*.obj
+*.lib
+*.exp
+*.pdb
+
+# Runtime-generated files
+*.log
+*.sav
+*_status.txt
+*_diag.txt
+*_actions.txt
+*_state.txt
+TeleportMod_spots.ini
+TeleportMod_hotkeys.ini
+TeleportMod_npc_scan*.tsv
+TeleportMod_npc_pull*.tsv
+
+# Local tooling
+.vs/
+.vscode/
+*.user
+*.suo
+Thumbs.db
+Desktop.ini
+
+# Backups, experiments, and caches
+*backup*/
+*baseline*/
+*snapshot*/
+*experiment*/
+*retired*/
+*cache*/
+__pycache__/
+

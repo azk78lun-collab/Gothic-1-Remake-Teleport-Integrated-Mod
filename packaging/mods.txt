@@ -1,0 +1,10 @@
+TeleportMod : 1
+ItemMod : 1
+Keybinds : 1
+CheatManagerEnablerMod : 1
+ConsoleEnablerMod : 1
+BPModLoaderMod : 1
+BPML_GenericFunctions : 1
+G1R_NoChestLocks : 1
+FocusNearbyPickups : 1
+MoneyMod : 0

@@ -1,0 +1,6 @@
+﻿local f = io.open('TeleportMod_KeysDiag.txt', 'w')
+f:write('NUM_ONE: ' .. tostring(Key.NUM_ONE) .. '\n')
+f:write('NUMPAD_ONE: ' .. tostring(Key.NUMPAD_ONE) .. '\n')
+f:write('NumPadOne: ' .. tostring(Key.NumPadOne) .. '\n')
+f:write('ONE: ' .. tostring(Key.ONE) .. '\n')
+f:close()

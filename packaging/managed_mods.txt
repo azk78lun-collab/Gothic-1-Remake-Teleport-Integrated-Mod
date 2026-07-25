@@ -1,0 +1,13 @@
+# Directories owned by the V4 package. The uninstaller removes only these.
+BPML_GenericFunctions
+BPModLoaderMod
+CheatManagerEnablerMod
+ConsoleEnablerMod
+FocusNearbyPickups
+G1R_NoChestLocks
+ItemMod
+Keybinds
+MoneyMod
+shared
+TeleportMod
+TeleportModUIExternal
