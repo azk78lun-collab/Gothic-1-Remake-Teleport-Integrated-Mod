@@ -1,57 +1,84 @@
 Gothic 1 Remake Teleport & Integrated Mod V4
-哥特王朝重制版：瞬移与整合 Mod V4
 
-INSTALL / 安装
-1. Fully close the game. / 完全关闭游戏。
-2. Double-click "双击一键安装.cmd". / 双击“双击一键安装.cmd”。
+================
+English
+================
 
-UNINSTALL / 卸载
-1. Fully close the game. / 完全关闭游戏。
-2. Double-click "双击一键卸载.cmd". / 双击“双击一键卸载.cmd”。
+INSTALL
+1. Fully close the game.
+2. Double-click "双击一键安装.cmd".
 
-IMPORTANT / 重要提示
+UNINSTALL
+1. Fully close the game.
+2. Double-click "双击一键卸载.cmd".
+
+IMPORTANT
 - The first UI launch may take about 10 seconds. Please wait before pressing F6 again.
-- 首次启动 UI 可能需要约 10 秒，请耐心等待，不要连续按 F6。
 - After teleporting, the view may appear unchanged. Take one step to let the game refresh the position.
-- 瞬移后画面有时看起来没有变化，请走一步让游戏刷新并应用新位置。
 
-HOTKEYS / 快捷键
+HOTKEYS
 - F6: Open the management UI; when already open, toggle foreground/minimized state.
-  F6：打开管理界面；界面已打开时切换前台与最小化。
 - F7: Toggle Free Flight. Default speed is 3x; use the UI slider for continuous adjustment.
-  F7：开启或关闭自由飞行。默认 3 倍速，可在 UI 中用横条连续调节。
 - F1: Save the current position as a teleport node.
-  F1：将当前位置保存为瞬移节点。
 - V: Toggle nearby-item highlighting.
-  V：开启或关闭附近物品高亮。
 
-NOTES / 说明
+NOTES
 - Item Spawn right-click actions add to or remove from the inventory using the quantity at the top.
-  物品生成列表右键可按顶部数量“添加进背包”或“从背包删除”。
-- Unlocking can be enabled or disabled directly in the UI; the first unlock no longer requires Ctrl+R.
-  一键开锁可直接在 UI 中启用或关闭，首次开锁不需要再按 Ctrl+R。
+- Unlocking can be enabled or disabled directly in the UI; the first unlock should not require Ctrl+R.
 - NPC pulling works only for characters currently loaded by the game. Free Flight must be off.
-  人物拉取只处理游戏当前已加载的人物，执行前必须关闭自由飞行。
 - Installation and uninstallation only manage folders listed in managed_mods.txt.
-  安装和卸载只处理 managed_mods.txt 中列出的 V4 文件夹。
 - The game does not normally provide dwmapi.dll. The uninstaller removes the UE4SS proxy; a pre-existing non-UE4SS file is backed up and restored.
-  游戏本体通常不自带 dwmapi.dll。卸载会删除 UE4SS 代理；若安装前存在非 UE4SS 同名文件，会备份并恢复。
 - Never install or uninstall while the game is running.
-  游戏运行时不要安装或卸载。
 
-MANUAL INSTALL / 手动安装
-1. Fully close the game. / 完全关闭游戏。
+MANUAL INSTALL
+1. Fully close the game.
 2. Copy dwmapi.dll, UE4SS.dll, and UE4SS-settings.ini to:
-   将 dwmapi.dll、UE4SS.dll、UE4SS-settings.ini 复制到：
    Gothic 1 Remake\G1R\Binaries\Win64\
 3. Copy every folder under Mods to:
-   将 Mods 下的所有文件夹复制到：
    Gothic 1 Remake\G1R\Binaries\Win64\Mods\
 4. Merge Mods\mods.txt into the game's Mods\mods.txt.
-   将 Mods\mods.txt 的内容合并到游戏目录的 Mods\mods.txt。
 
-MANUAL UNINSTALL / 手动卸载
+MANUAL UNINSTALL
 Remove the V4-owned Mod folders and their entries from Mods\mods.txt. Then remove UE4SS.dll, UE4SS-settings.ini, and the UE4SS dwmapi.dll proxy. Restore dwmapi.dll.user-backup if present. Do not delete unrelated Mods.
 
-删除 V4 所属 Mod 文件夹及 Mods\mods.txt 中对应条目，再删除 UE4SS.dll、UE4SS-settings.ini 和 UE4SS 的 dwmapi.dll 代理。若存在 dwmapi.dll.user-backup，请恢复为 dwmapi.dll。不要删除不属于 V4 的其他 Mod。
 
+================
+中文
+================
+
+安装
+1. 完全关闭游戏。
+2. 双击“双击一键安装.cmd”。
+
+卸载
+1. 完全关闭游戏。
+2. 双击“双击一键卸载.cmd”。
+
+重要提示
+- 首次启动 UI 可能需要约 10 秒，请耐心等待，不要连续按 F6。
+- 瞬移后画面有时看起来没有变化，请走一步让游戏刷新并应用新位置。
+
+快捷键
+- F6：打开管理界面；界面已打开时切换前台/最小化状态。
+- F7：开启或关闭自由飞行。默认 3 倍速，可在 UI 中用横条连续调节。
+- F1：将当前位置保存为瞬移节点。
+- V：开启或关闭附近物品高亮。
+
+说明
+- 物品生成列表右键可按顶部数量“添加进背包”或“从背包删除”。
+- 一键开锁可直接在 UI 中启用或关闭，首次开锁不应再需要按 Ctrl+R。
+- 人物拉取只处理游戏当前已加载的人物，执行前必须关闭自由飞行。
+- 安装和卸载只处理 managed_mods.txt 中列出的 V4 文件夹。
+- 游戏本体通常不自带 dwmapi.dll。卸载会删除 UE4SS 代理；若安装前存在非 UE4SS 同名文件，会备份并恢复。
+- 游戏运行时不要安装或卸载。
+
+手动安装
+1. 完全关闭游戏。
+2. 复制 dwmapi.dll、UE4SS.dll、UE4SS-settings.ini 到：
+   Gothic 1 Remake\G1R\Binaries\Win64\
+3. 复制 Mods 下的所有文件夹到：
+   Gothic 1 Remake\G1R\Binaries\Win64\Mods\
+4. 将 Mods\mods.txt 的内容合并到游戏目录的 Mods\mods.txt。
+
+手动卸载
+删除 V4 所属 Mod 文件夹及 Mods\mods.txt 中对应条目，再删除 UE4SS.dll、UE4SS-settings.ini 和 UE4SS 的 dwmapi.dll 代理。若存在 dwmapi.dll.user-backup，请恢复为 dwmapi.dll。不要删除不属于 V4 的其他 Mod。
