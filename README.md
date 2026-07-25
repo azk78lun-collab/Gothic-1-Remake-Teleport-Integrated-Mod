@@ -27,11 +27,15 @@ A Windows utility mod for **Gothic 1 Remake**, built on UE4SS. It combines telep
 
 ## Download & Installation / 下载与安装
 
+**English**
+
 1. Download `Gothic-1-Remake-Teleport-Integrated-Mod-V4.zip` from the [Releases](https://github.com/azk78lun-collab/Gothic-1-Remake-Teleport-Integrated-Mod/releases) page.
 2. Extract the ZIP to a normal folder.
 3. Fully close the game.
 4. Double-click `双击一键安装.cmd`.
 5. Start the game and use the hotkeys below.
+
+**中文**
 
 1. 从 [Releases](https://github.com/azk78lun-collab/Gothic-1-Remake-Teleport-Integrated-Mod/releases) 页面下载 `Gothic-1-Remake-Teleport-Integrated-Mod-V4.zip`。
 2. 将 ZIP 完整解压到普通文件夹。
