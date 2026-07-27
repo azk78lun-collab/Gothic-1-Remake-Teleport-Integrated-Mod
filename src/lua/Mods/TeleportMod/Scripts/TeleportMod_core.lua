@@ -1,11 +1,11 @@
--- TeleportMod hot-reloadable core for Gothic 1 Remake v5.28-force-npc-pull
+-- TeleportMod hot-reloadable core for Gothic 1 Remake v5.30-bridge-singleton
 -- F1=Save | F3=List | F6=UI | F7=Free Flight | Numpad1-9/0=Bound TP
 -- Core only: no keybind/timer/console registration, loaded by main.lua shell
 -- v5.9: Numpad teleport now routes through CppBridge when available.
 --       Lua Root.RelativeLocation/set doesn't trigger movement system update,
 --       so character snaps back. CppBridge writes directly to game memory.
 
-local MOD_VERSION = "5.28-force-npc-pull"
+local MOD_VERSION = "5.30-bridge-singleton"
 local TeleportSpots = {}
 local NumpadBindings = {}
 local SpotAutoIndex = 0
@@ -1744,20 +1744,30 @@ local function GetInteractionObject(context)
     return nil
 end
 
-local function IsDoorOrContainerInteraction(ability)
+local function GetFlightPreservingInteractionRoute(ability)
     local name = string.lower(ObjectFullName(ability))
-    return name:find("ga_human_opendoor", 1, true) ~= nil or
+    if name:find("ga_human_opendoor", 1, true) ~= nil or
         name:find("gameplayabilitydoor", 1, true) ~= nil or
         name:find("gameplayabilityopendoor", 1, true) ~= nil or
         name:find("opencontainer", 1, true) ~= nil or
-        name:find("gameplayabilityopencontainer", 1, true) ~= nil
+        name:find("gameplayabilityopencontainer", 1, true) ~= nil then
+        return "lock"
+    end
+    if name:find("gameplayabilityputdown", 1, true) ~= nil or
+        name:find("gameplayabilitypickup", 1, true) ~= nil or
+        name:find("ga_human_putdown", 1, true) ~= nil or
+        name:find("ga_human_pickup", 1, true) ~= nil then
+        return "carry"
+    end
+    return nil
 end
 
 local function BeforeInteraction(context)
     local ability = GetInteractionObject(context)
     local abilityName = ObjectFullName(ability)
-    if IsDoorOrContainerInteraction(ability) then
-        Diag("BeforeInteraction keep-flight route=lock ability=%s", tostring(abilityName))
+    local preserveRoute = GetFlightPreservingInteractionRoute(ability)
+    if preserveRoute then
+        Diag("BeforeInteraction keep-flight route=%s ability=%s", tostring(preserveRoute), tostring(abilityName))
         return false
     end
     if not NoClipEnabled then return false end
@@ -2857,6 +2867,9 @@ end
 local Core = {}
 
 function Core.Init(reason)
+    -- Allow one bridge availability check per init. Startup restoration may
+    -- launch it first; the final ensure below must not dispatch it again.
+    NativeBridgeLaunchRequested = false
     -- CRITICAL: Reset all world control states on reload.
     -- Without this, Ctrl+R with WorldFreeze active = slomo 0.0001 persists = game appears frozen.
     pcall(function()
@@ -2899,7 +2912,6 @@ function Core.Init(reason)
     else
         Diag("core reload requested reason=%s version=%s", tostring(reason), MOD_VERSION)
     end
-    NativeBridgeLaunchRequested = false
     EnsureCppBridgeStarted(reason)
     WriteStatus("IDLE", "core ready " .. MOD_VERSION, nil)
     LoadSpots()

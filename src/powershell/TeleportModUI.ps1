@@ -299,15 +299,15 @@ function Clear-ActionFiles {
 Clear-ActionFiles
 
 $script:attributeDefinitions = @(
-    [pscustomobject]@{ Key = "Level"; Name = "等级"; Current = "1"; Write = "20" },
-    [pscustomobject]@{ Key = "Experience"; Name = "经验值"; Current = "0"; Write = "10000" },
-    [pscustomobject]@{ Key = "SkillPoints"; Name = "技能点"; Current = "0"; Write = "10" },
-    [pscustomobject]@{ Key = "Health"; Name = "生命值"; Current = "100"; Write = "500" },
-    [pscustomobject]@{ Key = "MaxHealth"; Name = "最大生命"; Current = "100"; Write = "500" },
-    [pscustomobject]@{ Key = "Mana"; Name = "法力值"; Current = "50"; Write = "200" },
-    [pscustomobject]@{ Key = "MaxMana"; Name = "最大法力"; Current = "50"; Write = "200" },
-    [pscustomobject]@{ Key = "Strength"; Name = "力量"; Current = "10"; Write = "100" },
-    [pscustomobject]@{ Key = "Dexterity"; Name = "敏捷"; Current = "10"; Write = "100" }
+    [pscustomobject]@{ Key = "Level"; Name = "等级"; NameEn = "Level"; Current = "1"; Write = "20" },
+    [pscustomobject]@{ Key = "Experience"; Name = "经验值"; NameEn = "Experience"; Current = "0"; Write = "10000" },
+    [pscustomobject]@{ Key = "SkillPoints"; Name = "技能点"; NameEn = "Skill Points"; Current = "0"; Write = "10" },
+    [pscustomobject]@{ Key = "Health"; Name = "生命值"; NameEn = "Health"; Current = "100"; Write = "500" },
+    [pscustomobject]@{ Key = "MaxHealth"; Name = "最大生命"; NameEn = "Maximum Health"; Current = "100"; Write = "500" },
+    [pscustomobject]@{ Key = "Mana"; Name = "法力值"; NameEn = "Mana"; Current = "50"; Write = "200" },
+    [pscustomobject]@{ Key = "MaxMana"; Name = "最大法力"; NameEn = "Maximum Mana"; Current = "50"; Write = "200" },
+    [pscustomobject]@{ Key = "Strength"; Name = "力量"; NameEn = "Strength"; Current = "10"; Write = "100" },
+    [pscustomobject]@{ Key = "Dexterity"; Name = "敏捷"; NameEn = "Dexterity"; Current = "10"; Write = "100" }
 )
 
 function Read-FileShareSafe([string]$path) {
@@ -1030,7 +1030,9 @@ function Read-AttrStateFile {
 
 function Get-AttributeName([string]$key) {
     foreach ($def in $script:attributeDefinitions) {
-        if ($def.Key -eq $key) { return $def.Name }
+        if ($def.Key -eq $key) {
+            return $(if ($script:uiLanguage -eq "en") { $def.NameEn } else { $def.Name })
+        }
     }
     return $key
 }
@@ -1054,7 +1056,8 @@ function Refresh-AttrCandidatesList {
     $attrCandidateListView.Items.Clear()
     $def = Get-SelectedAttributeDefinition
     if ($def) {
-        $baseItem = New-Object System.Windows.Forms.ListViewItem($def.Name)
+        $attributeName = Get-AttributeName $def.Key
+        $baseItem = New-Object System.Windows.Forms.ListViewItem($attributeName)
         [void]$baseItem.SubItems.Add("BaseValue")
         [void]$baseItem.SubItems.Add($attrCurrentValueBox.Text)
         [void]$baseItem.SubItems.Add("CT固定链")
@@ -1062,7 +1065,7 @@ function Refresh-AttrCandidatesList {
         [void]$baseItem.SubItems.Add("")
         [void]$attrCandidateListView.Items.Add($baseItem)
 
-        $currentItem = New-Object System.Windows.Forms.ListViewItem($def.Name)
+        $currentItem = New-Object System.Windows.Forms.ListViewItem($attributeName)
         [void]$currentItem.SubItems.Add("CurrentValue")
         [void]$currentItem.SubItems.Add($attrCurrentValueBox.Text)
         [void]$currentItem.SubItems.Add("CT固定链")
@@ -2354,7 +2357,12 @@ function Sync-AttributeInputs {
     if ($attrWriteValueBox) { $attrWriteValueBox.Text = $def.Write }
     $script:attrCandidates.Clear()
     Refresh-AttrCandidatesList
-    Set-AttrStatus ("已选择 {0}，可先读取，再写入 Current/Base/Both。" -f $def.Name)
+    $attributeName = Get-AttributeName $def.Key
+    if ($script:uiLanguage -eq "en") {
+        Set-AttrStatus ("Selected {0}. Read it first, then write Current, Base, or Both." -f $attributeName)
+    } else {
+        Set-AttrStatus ("已选择 {0}，可先读取，再写入 Current/Base/Both。" -f $attributeName)
+    }
 }
 
 function Start-AttrDetect {
@@ -2366,7 +2374,12 @@ function Start-AttrDetect {
 
     if (Ensure-PlayerEditCppBridge) {
         Append-AttrAction ("ATTR_READ|{0}" -f $def.Key)
-        Set-AttrStatus ("已请求读取 {0}。" -f $def.Name)
+        $attributeName = Get-AttributeName $def.Key
+        if ($script:uiLanguage -eq "en") {
+            Set-AttrStatus ("Requested a read for {0}." -f $attributeName)
+        } else {
+            Set-AttrStatus ("已请求读取 {0}。" -f $attributeName)
+        }
     }
 }
 
@@ -2385,7 +2398,12 @@ function Write-AttrValue([string]$slot) {
     $newValue = $targetValue.ToString([System.Globalization.CultureInfo]::InvariantCulture)
     if (Ensure-PlayerEditCppBridge) {
         Append-AttrAction ("ATTR_WRITE|{0}|{1}|{2}" -f $def.Key, $slot, $newValue)
-        Set-AttrStatus ("已请求写入 {0} {1} = {2}。" -f $def.Name, $slot, $newValue)
+        $attributeName = Get-AttributeName $def.Key
+        if ($script:uiLanguage -eq "en") {
+            Set-AttrStatus ("Requested write: {0} {1} = {2}." -f $attributeName, $slot, $newValue)
+        } else {
+            Set-AttrStatus ("已请求写入 {0} {1} = {2}。" -f $attributeName, $slot, $newValue)
+        }
     }
 }
 
@@ -2417,8 +2435,8 @@ function Get-DiagnosticLogPath {
     if ($diagSourceBox -and $null -ne $diagSourceBox.SelectedItem) {
         $source = $diagSourceBox.SelectedItem.ToString()
     }
-    if ($script:uiLanguage -eq "en") {
-        $source = Convert-UiText $source
+    if ($script:uiTextZh -and $script:uiTextZh.ContainsKey($source)) {
+        $source = $script:uiTextZh[$source]
     }
     switch ($source) {
         "瞬移状态" { return $script:teleportStatusPath }
@@ -2769,9 +2787,9 @@ function Normalize-NpcLifeState([string]$value) {
 
 function Get-NpcLifeStateText([string]$value) {
     switch (Normalize-NpcLifeState $value) {
-        "ACTIVE" { return "存活" }
-        "DOWN_OR_DEAD" { return "倒地/死亡" }
-        default { return "未知" }
+        "ACTIVE" { return $(if ($script:uiLanguage -eq "en") { "Active" } else { "存活" }) }
+        "DOWN_OR_DEAD" { return $(if ($script:uiLanguage -eq "en") { "Downed / Dead" } else { "倒地/死亡" }) }
+        default { return $(if ($script:uiLanguage -eq "en") { "Unknown" } else { "未知" }) }
     }
 }
 
@@ -2863,7 +2881,11 @@ function Get-NpcScanFilterText {
 
 function Get-NpcLifeStateFilter {
     if (-not $npcScanStateFilterCombo) { return "ACTIVE" }
-    switch ([string]$npcScanStateFilterCombo.SelectedItem) {
+    $selected = [string]$npcScanStateFilterCombo.SelectedItem
+    if ($script:uiTextZh -and $script:uiTextZh.ContainsKey($selected)) {
+        $selected = $script:uiTextZh[$selected]
+    }
+    switch ($selected) {
         "全部" { return "ALL" }
         "倒地/死亡" { return "DOWN_OR_DEAD" }
         "未知" { return "UNKNOWN" }
@@ -3036,7 +3058,7 @@ function Add-NpcGroupHeaderToListView([System.Windows.Forms.ListView]$view, [str
     $item = New-Object System.Windows.Forms.ListViewItem(("{0} {1} ({2})" -f $marker, $groupName, $count))
     [void]$item.SubItems.Add("")
     [void]$item.SubItems.Add("")
-    [void]$item.SubItems.Add("点击展开/折叠")
+    [void]$item.SubItems.Add((Convert-UiText "点击展开/折叠"))
     [void]$item.SubItems.Add("")
     $item.Tag = [pscustomobject]@{
         IsNpcGroup = $true
@@ -3118,10 +3140,12 @@ function Refresh-NpcScanViews {
         $historyCount = @($script:npcScanHistoryItems).Count
         $filter = Get-NpcScanFilterText
         $lifeFilter = Get-NpcLifeStateFilter
+        $currentLabel = if ($script:uiLanguage -eq "en") { "Current" } else { "本次" }
+        $historyLabel = if ($script:uiLanguage -eq "en") { "History" } else { "历史" }
         if ($filter -or $lifeFilter -ne "ALL") {
-            $npcScanCountLabel.Text = "本次 $(Get-NpcScanFilteredCount $script:npcScanItems)/$currentCount | 历史 $(Get-NpcScanFilteredCount $script:npcScanHistoryItems)/$historyCount"
+            $npcScanCountLabel.Text = "$currentLabel $(Get-NpcScanFilteredCount $script:npcScanItems)/$currentCount | $historyLabel $(Get-NpcScanFilteredCount $script:npcScanHistoryItems)/$historyCount"
         } else {
-            $npcScanCountLabel.Text = "本次 $currentCount | 历史 $historyCount"
+            $npcScanCountLabel.Text = "$currentLabel $currentCount | $historyLabel $historyCount"
         }
     }
 }
@@ -3603,6 +3627,9 @@ $script:uiInputColor = $script:uiThemes[$script:currentThemeName].Input
 $script:uiLinkColor = $script:uiThemes[$script:currentThemeName].Link
 
 function Set-ThemeColors([string]$themeName) {
+    if ($script:uiTextZh -and $script:uiTextZh.ContainsKey($themeName)) {
+        $themeName = $script:uiTextZh[$themeName]
+    }
     if (-not $script:uiThemes.Contains($themeName)) {
         $themeName = "默认白"
     }
@@ -5332,6 +5359,11 @@ $script:uiTextEn = @{
     "历史扫描" = "Scan History"
     "状态" = "Status"
     "最近状态" = "Latest Status"
+    "仅存活" = "Active Only"
+    "存活" = "Active"
+    "倒地/死亡" = "Downed / Dead"
+    "未知" = "Unknown"
+    "点击展开/折叠" = "Click to expand/collapse"
     "按扫描后读取周围人物；Ctrl/Shift 可多选，右键可拉到身边。" = "Scan nearby NPCs; use Ctrl/Shift to multi-select and right-click to pull them to you."
     "自定义增加" = "Custom Add"
     "自定义减少" = "Custom Remove"
@@ -5438,6 +5470,11 @@ $script:uiTextEn = @{
     "全部折叠" = "Collapse All"
     "选择左侧任务查看攻略内容。" = "Select a quest on the left to view its walkthrough."
     "护眼颜色" = "Theme"
+    "默认白" = "Default Light"
+    "柔和绿" = "Soft Green"
+    "米杏色" = "Warm Beige"
+    "淡灰蓝" = "Soft Blue Gray"
+    "夜间灰" = "Night Gray"
     "窗口置顶" = "Pin Window"
     "取消置顶" = "Unpin"
     "F6 可唤起本窗口；右键节点可绑定小键盘；UI 打开时小键盘输入不会触发瞬移。" = "F6 opens or toggles this window. Right-click a node for numpad binding."
@@ -5662,6 +5699,31 @@ function Set-ControlLanguage($control) {
     foreach ($child in $control.Controls) { Set-ControlLanguage $child }
 }
 
+function Sync-AttributeSelectorLanguage {
+    if (-not $attrSelectBox) { return }
+    $selectedKey = if ($attrSelectBox.SelectedItem) { [string]$attrSelectBox.SelectedItem.Key } else { "" }
+    $attrSelectBox.BeginUpdate()
+    try {
+        $attrSelectBox.Items.Clear()
+        $attrSelectBox.DisplayMember = if ($script:uiLanguage -eq "en") { "NameEn" } else { "Name" }
+        $attrSelectBox.ValueMember = "Key"
+        $selectedIndex = 0
+        for ($index = 0; $index -lt $script:attributeDefinitions.Count; $index++) {
+            $def = $script:attributeDefinitions[$index]
+            [void]$attrSelectBox.Items.Add($def)
+            if ($selectedKey -and $def.Key -eq $selectedKey) {
+                $selectedIndex = $index
+            }
+        }
+        if ($attrSelectBox.Items.Count -gt 0) {
+            $attrSelectBox.SelectedIndex = $selectedIndex
+        }
+    } finally {
+        $attrSelectBox.EndUpdate()
+    }
+    Refresh-AttrCandidatesList
+}
+
 function Apply-UiLanguage([string]$language) {
     $script:uiLanguage = if ($language -eq "en") { "en" } else { "zh" }
     Set-ControlLanguage $form
@@ -5681,8 +5743,10 @@ function Apply-UiLanguage([string]$language) {
     Layout-OreTopControls
     Layout-AttributeTopControls
     Layout-DiagnosticsTopControls
+    Sync-AttributeSelectorLanguage
     Refresh-ItemCategories
     Refresh-ItemList
+    Refresh-NpcScanViews
     if ($languageButton) {
         $languageButton.Text = if ($script:uiLanguage -eq "en") { "中文" } else { "English" }
     }

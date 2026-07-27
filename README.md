@@ -10,6 +10,12 @@ A Windows utility mod for **Gothic 1 Remake**, built on UE4SS. It combines telep
 
 This is an unofficial community project and is not affiliated with the game developer or publisher.
 
+### Videos And Mod Page
+
+- [Video Demo (YouTube)](https://youtu.be/BbprADLnpPY)
+- [Chinese Video Demo (Bilibili)](https://www.bilibili.com/video/BV1mbLf6HEEV)
+- [Mod Page (Nexus Mods)](https://www.nexusmods.com/gothic1remake/mods/536)
+
 ### Features
 
 - Teleport nodes, manual coordinates, saved-node import/export, and teleporting to scanned characters.
@@ -101,6 +107,12 @@ Original source in this repository is released under **GPL-3.0**. UE4SS and its 
 这是一个基于 UE4SS 的 **《哥特王朝重制版》Windows 工具 Mod**。它整合了瞬移、自由飞行、物品与背包工具、附近人物扫描与拉取、开锁、高亮，以及英文/简体中文界面。
 
 本项目是非官方社区作品，与游戏开发商或发行商没有隶属关系。
+
+### 视频演示与模组地址
+
+- [视频演示（YouTube）](https://youtu.be/BbprADLnpPY)
+- [中文视频演示（哔哩哔哩）](https://www.bilibili.com/video/BV1mbLf6HEEV)
+- [模组地址（Nexus Mods）](https://www.nexusmods.com/gothic1remake/mods/536)
 
 ### 功能
 

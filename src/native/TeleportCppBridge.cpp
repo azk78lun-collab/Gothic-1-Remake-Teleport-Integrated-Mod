@@ -29,7 +29,7 @@ namespace fs = std::filesystem;
 namespace {
 
 constexpr wchar_t kProcessExe[] = L"G1R-Win64-Shipping.exe";
-constexpr char kBridgeVersion[] = "5.16-interaction-edge-resume";
+constexpr char kBridgeVersion[] = "5.17-single-instance";
 constexpr DWORD kProcessAccess =
     PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE;
 
@@ -159,6 +159,26 @@ std::wstring LowerWide(std::wstring value) {
     return value;
 }
 
+std::wstring BridgeMutexName(const fs::path& win64Dir) {
+    std::error_code ec;
+    fs::path normalized = fs::weakly_canonical(win64Dir, ec);
+    if (ec) {
+        normalized = win64Dir.lexically_normal();
+    }
+
+    const std::wstring key = LowerWide(normalized.wstring());
+    uint64_t hash = 14695981039346656037ULL;
+    for (const wchar_t ch : key) {
+        hash ^= static_cast<uint64_t>(ch);
+        hash *= 1099511628211ULL;
+    }
+
+    std::wostringstream name;
+    name << L"Local\\G1RTeleportCppBridge_"
+         << std::uppercase << std::hex << std::setw(16) << std::setfill(L'0') << hash;
+    return name.str();
+}
+
 std::vector<std::string> SplitPipe(const std::string& line) {
     std::vector<std::string> parts;
     std::stringstream ss(line);
@@ -217,17 +237,6 @@ void WriteState(const Paths& paths, const std::string& state, const std::string&
     out << "MESSAGE=" << message << "\r\n";
     out << "UPDATED=" << static_cast<long long>(std::time(nullptr)) << "\r\n";
     WriteText(paths.status, out.str(), false);
-}
-
-bool IsProcessAlive(DWORD pid) {
-    HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
-    if (!process) {
-        return false;
-    }
-    DWORD code = 0;
-    const bool alive = GetExitCodeProcess(process, &code) && code == STILL_ACTIVE;
-    CloseHandle(process);
-    return alive;
 }
 
 std::optional<std::wstring> QueryProcessPath(DWORD pid) {
@@ -1021,28 +1030,37 @@ int wmain(int argc, wchar_t** argv) {
     paths.diag = paths.win64Dir / "TeleportMod_cpp_diag.txt";
     paths.pid = paths.win64Dir / "TeleportMod_cpp_bridge.pid";
     FlightState flight;
+    HANDLE singletonMutex = nullptr;
 
     try {
-        if (fs::exists(paths.pid)) {
-            std::ifstream oldPidFile(paths.pid);
-            DWORD oldPid = 0;
-            oldPidFile >> oldPid;
-            if (oldPid && IsProcessAlive(oldPid)) {
-                WriteState(paths, "IDLE", "cpp bridge already running");
-                return 0;
-            }
-            fs::remove(paths.pid);
+        const DWORD bridgePid = GetCurrentProcessId();
+        const std::wstring mutexName = BridgeMutexName(paths.win64Dir);
+        singletonMutex = CreateMutexW(nullptr, TRUE, mutexName.c_str());
+        if (!singletonMutex) {
+            WriteState(paths, "FAILED", "cpp bridge singleton mutex creation failed");
+            return 1;
+        }
+        if (GetLastError() == ERROR_ALREADY_EXISTS) {
+            std::ostringstream message;
+            message << "SINGLETON rejected duplicate pid=" << bridgePid;
+            WriteDiag(paths, message.str());
+            WriteState(paths, "IDLE", "cpp bridge already running; duplicate rejected");
+            CloseHandle(singletonMutex);
+            singletonMutex = nullptr;
+            return 0;
         }
 
-        WriteText(paths.pid, std::to_string(GetCurrentProcessId()), false);
+        WriteText(paths.pid, std::to_string(bridgePid), false);
         // Because the UI deletes the actions file on startup, anything currently in
         // the file was written by the user in this session (e.g. they clicked
         // teleport before the bridge finished launching). We MUST start reading
         // from offset 0 to catch those fast first-clicks.
         uint64_t lastLength = 0;
         WriteText(paths.diag, "[" + NowText() + "] TeleportCppBridge v" +
-                                  std::string(kBridgeVersion) + " started\r\n", false);
-        WriteState(paths, "IDLE", "cpp bridge started");
+                                  std::string(kBridgeVersion) + " started pid=" +
+                                  std::to_string(bridgePid) + " singleton=owner\r\n", false);
+        WriteState(paths, "IDLE", "cpp bridge started; singleton owner pid=" +
+                                  std::to_string(bridgePid));
         bool wasWaitingForGame = false;
 
         while (true) {
@@ -1097,6 +1115,10 @@ int wmain(int argc, wchar_t** argv) {
         try {
             fs::remove(paths.pid);
         } catch (...) {
+        }
+        if (singletonMutex) {
+            CloseHandle(singletonMutex);
+            singletonMutex = nullptr;
         }
         return 1;
     }
