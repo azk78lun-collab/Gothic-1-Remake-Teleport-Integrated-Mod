@@ -1,0 +1,136 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b0d10;
+  --panel: #15191e;
+  --panel-2: #1d232a;
+  --text: #f4f4f1;
+  --muted: #aab2bc;
+  --line: #303944;
+  --accent: #42d3a0;
+  --accent-dark: #153f34;
+  --danger: #ff7d78;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(66, 211, 160, .12), transparent 34rem),
+    var(--bg);
+  color: var(--text);
+  font: 16px/1.55 "Segoe UI", "Microsoft YaHei UI", sans-serif;
+}
+
+.shell {
+  width: min(920px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 56px 0 80px;
+}
+
+header { margin-bottom: 28px; }
+.eyebrow { color: var(--accent); letter-spacing: .08em; text-transform: uppercase; font-size: .78rem; font-weight: 700; }
+h1, h2 { line-height: 1.2; }
+h1 { margin: 8px 0 12px; font-size: clamp(2rem, 6vw, 3.7rem); letter-spacing: -.04em; }
+h1 span { color: var(--muted); font-weight: 400; }
+h2 { margin: 0; font-size: 1.1rem; }
+.intro, small { color: var(--muted); }
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stats div, .board, .composer {
+  border: 1px solid var(--line);
+  background: rgba(21, 25, 30, .94);
+  border-radius: 14px;
+}
+
+.stats div { padding: 18px; }
+.stats strong { display: block; font-size: 1.7rem; }
+.stats span { color: var(--muted); font-size: .82rem; }
+
+.board, .composer { padding: 20px; margin-top: 16px; }
+.section-head, .composer-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.messages { display: grid; gap: 10px; margin-top: 18px; }
+
+.message-card {
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--panel-2);
+  border-left: 3px solid var(--line);
+}
+.message-card.admin { border-left-color: var(--accent); background: var(--accent-dark); }
+.message-meta { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: .8rem; }
+.message-name { color: var(--text); font-weight: 700; }
+.message-body { margin-top: 7px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.reply-reference {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-left: 2px solid var(--line);
+  color: var(--muted);
+  background: rgba(0, 0, 0, .16);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.message-tools { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+.reply-context, .admin-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--panel-2);
+}
+.admin-controls { margin: 16px 0; background: rgba(21, 25, 30, .94); }
+.admin-controls div { display: flex; gap: 10px; }
+.board-state { color: var(--accent); }
+.board-state.closed { color: var(--danger); }
+
+label { display: block; margin: 16px 0 7px; font-weight: 600; }
+input, textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #0e1115;
+  color: var(--text);
+  padding: 11px 12px;
+  font: inherit;
+}
+textarea { resize: vertical; }
+input:focus, textarea:focus { outline: 2px solid rgba(66, 211, 160, .45); border-color: var(--accent); }
+
+button {
+  border: 0;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #06261d;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+button:hover { filter: brightness(1.08); }
+button:disabled { cursor: wait; opacity: .55; }
+button.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); }
+button.danger { padding: 5px 9px; background: transparent; border: 1px solid var(--danger); color: var(--danger); font-size: .8rem; }
+button.compact { padding: 5px 9px; font-size: .8rem; }
+
+.composer-actions { margin-top: 14px; }
+#status, #login-status, #admin-status { color: var(--muted); font-size: .88rem; }
+.error { color: var(--danger) !important; }
+[hidden] { display: none !important; }
+
+@media (max-width: 580px) {
+  .shell { width: min(100% - 20px, 920px); padding-top: 28px; }
+  .section-head, .composer-actions, .message-meta, .reply-context, .admin-controls { align-items: flex-start; flex-direction: column; }
+  .admin-controls div { width: 100%; flex-direction: column; }
+  .composer-actions button, .section-head button { width: 100%; }
+}

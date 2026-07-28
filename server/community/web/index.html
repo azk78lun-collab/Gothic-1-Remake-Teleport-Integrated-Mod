@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gothic 1 Remake Teleport & Integrated Mod community board">
+  <title>G1R Mod Community / 玩家留言板</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <p class="eyebrow">Gothic 1 Remake Teleport &amp; Integrated Mod</p>
+      <h1>Community Board <span>/ 玩家留言板</span></h1>
+      <p class="intro">Messages are public. Do not include private information.<br>留言公开可见，请勿填写账号、存档或其他隐私信息。</p>
+    </header>
+
+    <section class="stats" aria-label="Community statistics">
+      <div><strong id="install-count">—</strong><span>unique installs / 安装人数</span></div>
+      <div><strong id="message-count">—</strong><span>messages / 留言</span></div>
+    </section>
+
+    <section class="board">
+      <div class="section-head">
+        <h2>Recent messages / 最新留言</h2>
+        <button id="refresh" class="secondary" type="button">Refresh / 刷新</button>
+      </div>
+      <div id="messages" class="messages" aria-live="polite"></div>
+    </section>
+
+    <section class="composer">
+      <h2>Leave a message / 发表留言</h2>
+      <p id="board-state" class="board-state"></p>
+      <div id="reply-context" class="reply-context" hidden>
+        <span id="reply-target"></span>
+        <button id="cancel-reply" class="secondary compact" type="button">Cancel reply / 取消回复</button>
+      </div>
+      <label for="nickname">Nickname / 昵称 <small>（显示为“玩家·昵称”）</small></label>
+      <input id="nickname" maxlength="24" autocomplete="nickname" placeholder="Your nickname / 你的昵称">
+      <label for="message">Message / 留言</label>
+      <textarea id="message" maxlength="500" rows="5" placeholder="Up to 500 characters / 最多 500 字"></textarea>
+      <div class="composer-actions">
+        <span id="status" role="status"></span>
+        <button id="post" type="button">Post / 发布</button>
+      </div>
+    </section>
+  </main>
+  <script src="/assets/app.js" defer></script>
+</body>
+</html>

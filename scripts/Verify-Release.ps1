@@ -22,6 +22,7 @@ $requiredFiles = @(
     "Mods\G1R_NoChestLocks\Scripts\main.lua",
     "Mods\FocusNearbyPickups\Scripts\main.lua",
     "Mods\TeleportModUIExternal\TeleportModUI.ps1",
+    "Mods\TeleportModUIExternal\CommunityClient.ps1",
     "Mods\TeleportModUIExternal\TeleportCppBridge.exe",
     "Mods\TeleportModUIExternal\PlayerEditCppBridge.exe",
     "Mods\TeleportModUIExternal\TeleportUiNative.dll",
@@ -45,7 +46,12 @@ $forbiddenPatterns = @(
     "SaveBackups",
     "G1R-009.sav",
     "TeleportMod_crime_status",
-    "TeleportMod_hostility_status"
+    "TeleportMod_hostility_status",
+    ".private",
+    "community-admin",
+    "g1r-community.env",
+    "run-public-e2e",
+    "cleanup_test_records"
 )
 $allFiles = Get-ChildItem -LiteralPath $PackageRoot -Recurse -File
 foreach ($pattern in $forbiddenPatterns) {
@@ -59,12 +65,16 @@ foreach ($pattern in $forbiddenPatterns) {
 $textFiles = $allFiles | Where-Object {
     $_.Extension -in @(".ps1", ".lua", ".txt", ".md", ".ini", ".cmd", ".vbs", ".tsv")
 }
+$separator = [System.IO.Path]::DirectorySeparatorChar
 $forbiddenContent = @(
-    "E:\OpenClaw",
-    "C:\Users\Administrator",
+    ("E:" + $separator + "OpenClaw"),
+    ("C:" + $separator + "Users" + $separator + "Administrator"),
     "FORGIVE_ALL_CRIMES",
     "PARDON_ALL_CRIMES",
-    "CLEAR_HOSTILITY"
+    "CLEAR_HOSTILITY",
+    "G1R_COMMUNITY_ADMIN_TOKEN=",
+    ("161" + ".33.24.201"),
+    "ssh-key"
 )
 foreach ($file in $textFiles) {
     $content = [System.IO.File]::ReadAllText($file.FullName)

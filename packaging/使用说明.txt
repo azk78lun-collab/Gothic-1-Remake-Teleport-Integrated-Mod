@@ -26,6 +26,9 @@ NOTES
 - Item Spawn right-click actions add to or remove from the inventory using the quantity at the top.
 - Unlocking can be enabled or disabled directly in the UI; the first unlock should not require Ctrl+R.
 - NPC pulling works only for characters currently loaded by the game. Free Flight must be off.
+- The experimental Community Board is public. Select one message and choose "Reply Selected", or double-click it, to reply. Messages load only when you select "Refresh"; there is no automatic refresh.
+- Player nicknames receive a server-controlled "玩家·" prefix; administrator replies show as "管理员". The administrator can delete messages, clear the board, or temporarily pause player posting. Do not post private information.
+- After a successful installation, one anonymous event sends only a random UUID and the mod version. The UUID is stored in %LOCALAPPDATA%\G1RTeleportIntegratedMod\community-client.json so reinstalling does not count as a new person. It never includes usernames, hardware IDs, game paths, or save files, and network failure does not block installation. Set G1R_MOD_DISABLE_TELEMETRY=1 before installation to opt out.
 - Installation and uninstallation only manage folders listed in managed_mods.txt.
 - The game does not normally provide dwmapi.dll. The uninstaller removes the UE4SS proxy; a pre-existing non-UE4SS file is backed up and restored.
 - Never install or uninstall while the game is running.
@@ -68,6 +71,9 @@ Remove the V4-owned Mod folders and their entries from Mods\mods.txt. Then remov
 - 物品生成列表右键可按顶部数量“添加进背包”或“从背包删除”。
 - 一键开锁可直接在 UI 中启用或关闭，首次开锁不应再需要按 Ctrl+R。
 - 人物拉取只处理游戏当前已加载的人物，执行前必须关闭自由飞行。
+- 实验性玩家留言板内容公开可见。选择一条留言后点击“回复所选”，或双击该留言，即可回复。留言只在手动点击“刷新留言”时读取，不会自动刷新。
+- 玩家昵称由服务器统一添加“玩家·”前缀，管理员回复显示为“管理员”。管理员可删除单条留言、清空留言，或临时暂停玩家发言；请勿发布隐私信息。
+- 安装成功后会发送一次匿名安装事件，仅包含随机 UUID 和 Mod 版本。UUID 保存在 %LOCALAPPDATA%\G1RTeleportIntegratedMod\community-client.json，因此重复安装不会计为新用户；不包含用户名、硬件标识、游戏路径或存档，断网不会影响安装。若希望停用，请在安装前设置 G1R_MOD_DISABLE_TELEMETRY=1。
 - 安装和卸载只处理 managed_mods.txt 中列出的 V4 文件夹。
 - 游戏本体通常不自带 dwmapi.dll。卸载会删除 UE4SS 代理；若安装前存在非 UE4SS 同名文件，会备份并恢复。
 - 游戏运行时不要安装或卸载。

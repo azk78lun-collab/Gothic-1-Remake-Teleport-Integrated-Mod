@@ -34,4 +34,4 @@ Desktop.ini
 *retired*/
 *cache*/
 __pycache__/
-
+.private/

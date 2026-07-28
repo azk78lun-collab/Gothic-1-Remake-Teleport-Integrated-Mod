@@ -5,7 +5,7 @@ param(
 
     [string]$NativeBinRoot = "",
     [string]$OutputRoot = "",
-    [string]$Version = "v4.0.0"
+    [string]$Version = "v4.1.0"
 )
 
 $ErrorActionPreference = "Stop"
@@ -98,6 +98,7 @@ Get-ChildItem -LiteralPath (Join-Path $repoRoot "src\lua\Mods") -Directory |
     }
 
 Copy-Item -LiteralPath (Join-Path $repoRoot "src\powershell\TeleportModUI.ps1") -Destination $uiRoot
+Copy-Item -LiteralPath (Join-Path $repoRoot "src\powershell\CommunityClient.ps1") -Destination $uiRoot
 Copy-Item -LiteralPath (Join-Path $repoRoot "src\powershell\TeleportMemoryBridge.ps1") -Destination $uiRoot
 Get-ChildItem -LiteralPath (Join-Path $repoRoot "src\data") -File |
     ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $uiRoot }

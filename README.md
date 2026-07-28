@@ -23,6 +23,7 @@ This is an unofficial community project and is not affiliated with the game deve
 - Nearby-character scanning with active/downed/dead filters, history, multi-selection, and pulling loaded characters to the player.
 - Item spawning plus direct add-to-inventory and remove-from-inventory actions using the selected quantity.
 - Chest/door unlocking and nearby-item highlighting.
+- An experimental public community board in the UI, with threaded replies, player nicknames, and administrator replies.
 - English and Simplified Chinese UI.
 
 ### Download And Installation
@@ -34,6 +35,8 @@ This is an unofficial community project and is not affiliated with the game deve
 5. Start the game and use the hotkeys below.
 
 To uninstall, fully close the game and run `双击一键卸载.cmd`.
+
+After a successful installation, the installer sends one anonymous installation event containing only a random local UUID and the mod version. The UUID is kept in `%LOCALAPPDATA%\G1RTeleportIntegratedMod\community-client.json` so reinstalling is not counted as a new person. It does not send a Windows username, hardware identifier, game path, or save data, and a network failure never blocks installation. Set the environment variable `G1R_MOD_DISABLE_TELEMETRY=1` before installation to opt out.
 
 ### Important First-Run Notes
 
@@ -57,6 +60,8 @@ To uninstall, fully close the game and run `双击一键卸载.cmd`.
 - A pulled living NPC may continue following its original AI schedule.
 - Item add/remove actions use the quantity shown at the top of the Item Spawn page.
 - The first unlock should work directly from the UI and should not require `Ctrl+R`.
+- Community-board messages are public. Select a message and use **Reply Selected** (or double-click it) to reply. Messages load only when **Refresh** is selected; there is no automatic refresh.
+- The server adds the `玩家·` prefix to player nicknames; only authenticated server posts appear as `管理员`. The administrator can delete messages, clear the board, or temporarily pause player posting. Do not post private information.
 
 ### Build From Source
 
@@ -87,6 +92,7 @@ Build a clean V4 package after native compilation:
 - `src/native`: three Windows native helpers
 - `src/data`: item and NPC name data
 - `src/assets`: UI images and icons
+- `server/community`: anonymous installation counter, public board, and administrator web console
 - `packaging`: installer templates
 - `third_party/UE4SS`: unmodified MIT-licensed UE4SS Lua components
 
@@ -121,6 +127,7 @@ Original source in this repository is released under **GPL-3.0**. UE4SS and its 
 - 附近人物扫描支持存活/倒地/死亡筛选、历史记录、多选，以及把已加载人物拉到玩家身边。
 - 物品生成，并可按选定数量直接添加到背包或从背包删除。
 - 箱子和门的一键开锁，以及附近物品高亮。
+- UI 内置实验性公开玩家留言板，支持逐条回复、玩家昵称与管理员回复。
 - 英文和简体中文界面。
 
 ### 下载与安装
@@ -132,6 +139,8 @@ Original source in this repository is released under **GPL-3.0**. UE4SS and its 
 5. 启动游戏，并使用下方快捷键。
 
 需要卸载时，请完全关闭游戏并运行 `双击一键卸载.cmd`。
+
+安装成功后，安装器会发送一次匿名安装事件，内容仅包含本机随机生成的 UUID 和 Mod 版本。该 UUID 保存在 `%LOCALAPPDATA%\G1RTeleportIntegratedMod\community-client.json`，因此重复安装不会被统计为新用户；不会发送 Windows 用户名、硬件标识、游戏路径或存档，网络失败也不会影响安装。若希望停用，可在安装前设置环境变量 `G1R_MOD_DISABLE_TELEMETRY=1`。
 
 ### 首次运行重要说明
 
@@ -155,6 +164,8 @@ Original source in this repository is released under **GPL-3.0**. UE4SS and its 
 - 被拉来的存活 NPC 可能继续执行原有 AI 行程。
 - 物品添加和删除操作遵循物品生成页顶部的数量输入框。
 - 首次开锁应可直接从 UI 启用，不应再需要按 `Ctrl+R`。
+- 留言板内容公开可见。选择一条留言后点击“回复所选”（或双击该留言）即可回复。留言只在手动点击“刷新留言”时读取，不会自动刷新。
+- 服务器会为玩家昵称统一添加 `玩家·` 前缀，只有通过服务器管理员认证发布的消息才显示为 `管理员`。管理员可删除单条留言、清空留言，或临时暂停玩家发言。请勿发布隐私信息。
 
 ### 从源码构建
 
@@ -185,6 +196,7 @@ Original source in this repository is released under **GPL-3.0**. UE4SS and its 
 - `src/native`：三个 Windows 原生辅助模块
 - `src/data`：物品与人物名称数据
 - `src/assets`：UI 图片和图标
+- `server/community`：匿名安装统计、公开留言板和管理员网页后台
 - `packaging`：安装包模板
 - `third_party/UE4SS`：未修改的 MIT 许可 UE4SS Lua 组件
 

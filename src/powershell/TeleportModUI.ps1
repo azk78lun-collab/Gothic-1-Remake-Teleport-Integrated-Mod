@@ -290,6 +290,19 @@ $script:inventoryItems = New-Object System.Collections.Generic.List[object]
 $script:inventoryGroupExpanded = @{}
 $script:pendingInventoryGroupFocus = $null
 $script:lastInventorySnapshotPath = ""
+$script:communityClientPath = Join-Path $scriptDir "CommunityClient.ps1"
+$script:communityStateDirectory = Join-Path $(if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { Join-Path $env:USERPROFILE "AppData\Local" }) "G1RTeleportIntegratedMod"
+$script:communityNicknamePath = Join-Path $script:communityStateDirectory "community-nickname.txt"
+$script:communityOperation = $null
+$script:communityOperationTimer = $null
+$script:communityStatusZh = "点击【刷新留言】读取最新内容。"
+$script:communityStatusEn = "Select Refresh to load the latest messages."
+$script:communityUniqueInstalls = 0
+$script:communityMessageCount = 0
+$script:communityAdminFont = $null
+$script:communityBoardOpen = $true
+$script:communityReplyToId = 0
+$script:communityReplyTargetName = ""
 
 function Clear-ActionFiles {
     Remove-Item -LiteralPath $actionsPath -Force -ErrorAction SilentlyContinue
@@ -3585,6 +3598,324 @@ function Start-NpcNearbyScan {
     }
 }
 
+function Set-CommunityStatus([string]$zh, [string]$en) {
+    $script:communityStatusZh = $zh
+    $script:communityStatusEn = $en
+    if ($communityStatusLabel) {
+        $communityStatusLabel.Text = if ($script:uiLanguage -eq "en") { $en } else { $zh }
+    }
+}
+
+function Update-CommunityStatsText {
+    if (-not $communityStatsLabel) { return }
+    if ($script:uiLanguage -eq "en") {
+        $communityStatsLabel.Text = "Installs {0} | Messages {1}" -f $script:communityUniqueInstalls, $script:communityMessageCount
+    } else {
+        $communityStatsLabel.Text = "安装人数 {0} | 留言 {1}" -f $script:communityUniqueInstalls, $script:communityMessageCount
+    }
+}
+
+function Load-CommunityNickname {
+    if (-not $communityNicknameBox -or -not (Test-Path -LiteralPath $script:communityNicknamePath)) { return }
+    try {
+        $saved = [System.IO.File]::ReadAllText($script:communityNicknamePath, [System.Text.Encoding]::UTF8).Trim()
+        if ($saved.Length -le 24) {
+            $communityNicknameBox.Text = $saved
+        }
+    } catch {
+    }
+}
+
+function Save-CommunityNickname([string]$nickname) {
+    try {
+        [System.IO.Directory]::CreateDirectory($script:communityStateDirectory) | Out-Null
+        [System.IO.File]::WriteAllText($script:communityNicknamePath, $nickname, [System.Text.UTF8Encoding]::new($false))
+    } catch {
+        Write-UiErrorLog ("保存留言昵称失败: " + $_.Exception.Message)
+    }
+}
+
+function Set-CommunityControlsEnabled([bool]$enabled) {
+    if ($communityRefreshButton) { $communityRefreshButton.Enabled = $enabled }
+    if ($communityPostButton) { $communityPostButton.Enabled = $enabled -and $script:communityBoardOpen }
+    if ($communityReplyButton) { $communityReplyButton.Enabled = $enabled -and $script:communityBoardOpen }
+    if ($communityCancelReplyButton) {
+        $communityCancelReplyButton.Enabled = $enabled -and $script:communityReplyToId -gt 0
+    }
+    if ($communityNicknameBox) { $communityNicknameBox.Enabled = $script:communityBoardOpen }
+    if ($communityMessageBox) { $communityMessageBox.Enabled = $script:communityBoardOpen }
+}
+
+function Clear-CommunityReply([switch]$Silent) {
+    $script:communityReplyToId = 0
+    $script:communityReplyTargetName = ""
+    if ($communityCancelReplyButton) { $communityCancelReplyButton.Enabled = $false }
+    if (-not $Silent) {
+        Set-CommunityStatus "已取消回复，可直接发布新留言。" "Reply cancelled; you can post a new message."
+    }
+}
+
+function Set-CommunityReplyFromSelection {
+    if (-not $script:communityBoardOpen) {
+        Set-CommunityStatus "留言板已临时关闭，当前不能回复。" "The board is temporarily closed; replies are disabled."
+        return
+    }
+    if (-not $communityListView -or $communityListView.SelectedItems.Count -ne 1) {
+        Set-CommunityStatus "请先选择一条留言。" "Select one message first."
+        return
+    }
+    $entry = $communityListView.SelectedItems[0].Tag
+    if (-not $entry) { return }
+    $script:communityReplyToId = [int]$entry.id
+    $script:communityReplyTargetName = [string]$entry.display_name
+    if ($communityCancelReplyButton) { $communityCancelReplyButton.Enabled = $true }
+    Set-CommunityStatus `
+        ("正在回复 {0} #{1}" -f $script:communityReplyTargetName, $script:communityReplyToId) `
+        ("Replying to {0} #{1}" -f $script:communityReplyTargetName, $script:communityReplyToId)
+    $communityMessageBox.Focus()
+}
+
+function Set-CommunityIdleStatus {
+    if (-not $script:communityBoardOpen) {
+        Set-CommunityStatus "留言板已临时关闭；仍可手动刷新查看留言。" "Posting is temporarily closed; Refresh remains available."
+    } elseif ($script:communityReplyToId -gt 0) {
+        Set-CommunityStatus `
+            ("正在回复 {0} #{1}" -f $script:communityReplyTargetName, $script:communityReplyToId) `
+            ("Replying to {0} #{1}" -f $script:communityReplyTargetName, $script:communityReplyToId)
+    } else {
+        Set-CommunityStatus "留言已刷新。" "Messages refreshed."
+    }
+}
+
+function Update-CommunityMessageDetail {
+    if (-not $communityDetailBox) { return }
+    if (-not $communityListView -or $communityListView.SelectedItems.Count -ne 1) {
+        $communityDetailBox.Text = if ($script:uiLanguage -eq "en") {
+            "Select one message to view its full content."
+        } else {
+            "选择一条留言查看完整内容。"
+        }
+        return
+    }
+    $entry = $communityListView.SelectedItems[0].Tag
+    $communityDetailBox.Text = if ($entry) { [string]$entry.message } else { "" }
+    $communityDetailBox.SelectionStart = 0
+    $communityDetailBox.SelectionLength = 0
+}
+
+function Remove-CommunityTempFiles([string[]]$paths) {
+    foreach ($path in @($paths)) {
+        if (-not [string]::IsNullOrWhiteSpace($path)) {
+            Remove-Item -LiteralPath $path -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+function Refresh-CommunityMessages([object]$data) {
+    if (-not $communityListView) { return }
+    $communityListView.BeginUpdate()
+    try {
+        $communityListView.Items.Clear()
+        foreach ($entry in @($data.messages)) {
+            $body = ([string]$entry.message) -replace "`r?`n", "  /  "
+            $localTime = [string]$entry.created_at
+            try {
+                $localTime = ([DateTimeOffset]::Parse([string]$entry.created_at)).ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+            } catch {
+            }
+            $row = New-Object System.Windows.Forms.ListViewItem([string]$entry.display_name)
+            $replyTarget = ""
+            if ($entry.reply_to_id) {
+                $replyTarget = if ($entry.reply_to_display_name) {
+                    "{0} #{1}" -f [string]$entry.reply_to_display_name, [int]$entry.reply_to_id
+                } else {
+                    "#{0}" -f [int]$entry.reply_to_id
+                }
+            }
+            [void]$row.SubItems.Add($replyTarget)
+            [void]$row.SubItems.Add($body)
+            [void]$row.SubItems.Add($localTime)
+            $row.Tag = $entry
+            $row.ToolTipText = if ($entry.reply_to_id -and $entry.reply_to_message) {
+                "↳ {0}: {1}`r`n{2}" -f $replyTarget, [string]$entry.reply_to_message, [string]$entry.message
+            } else {
+                [string]$entry.message
+            }
+            if ([string]$entry.role -eq "admin" -and $script:communityAdminFont) {
+                $row.Font = $script:communityAdminFont
+            }
+            [void]$communityListView.Items.Add($row)
+        }
+    } finally {
+        $communityListView.EndUpdate()
+    }
+    Update-CommunityMessageDetail
+    if ($data.stats) {
+        $script:communityUniqueInstalls = [int]$data.stats.unique_installs
+        $script:communityMessageCount = [int]$data.stats.messages
+        Update-CommunityStatsText
+    }
+    if ($data.PSObject.Properties.Name -contains "board_open") {
+        $script:communityBoardOpen = [bool]$data.board_open
+    } else {
+        $script:communityBoardOpen = $true
+    }
+    if (-not $script:communityBoardOpen) {
+        Clear-CommunityReply -Silent
+    }
+    Set-CommunityControlsEnabled $true
+}
+
+function Complete-CommunityOperation {
+    $operation = $script:communityOperation
+    if (-not $operation) { return }
+    $script:communityOperation = $null
+    Set-CommunityControlsEnabled $true
+
+    $stderr = ""
+    try { $stderr = $operation.Process.StandardError.ReadToEnd().Trim() } catch {}
+    try { $operation.Process.Dispose() } catch {}
+
+    $result = $null
+    if (Test-Path -LiteralPath $operation.ResponsePath) {
+        try {
+            $result = Get-Content -LiteralPath $operation.ResponsePath -Raw -Encoding UTF8 | ConvertFrom-Json
+        } catch {
+            Write-UiErrorLog ("留言板结果解析失败: " + $_.Exception.Message)
+        }
+    }
+    Remove-CommunityTempFiles @($operation.RequestPath, $operation.ResponsePath)
+
+    if (-not $result -or -not $result.ok) {
+        $detail = if ($result -and $result.message) { [string]$result.message } elseif ($stderr) { $stderr } else { "unknown error" }
+        if ($result -and [string]$result.message -eq "the community board is temporarily closed") {
+            $script:communityBoardOpen = $false
+            Clear-CommunityReply -Silent
+            Set-CommunityControlsEnabled $true
+            Set-CommunityIdleStatus
+            return
+        }
+        Set-CommunityStatus ("留言板连接失败：{0}" -f $detail) ("Community connection failed: {0}" -f $detail)
+        return
+    }
+
+    if ($operation.Action -eq "List") {
+        Refresh-CommunityMessages $result.data
+        Set-CommunityIdleStatus
+        return
+    }
+
+    Save-CommunityNickname $operation.Nickname
+    $communityMessageBox.Clear()
+    Clear-CommunityReply -Silent
+    Set-CommunityControlsEnabled $true
+    Set-CommunityStatus "留言已发布；点击【刷新留言】查看最新内容。" "Message posted; select Refresh to load the latest messages."
+}
+
+function Ensure-CommunityOperationTimer {
+    if ($script:communityOperationTimer) { return }
+    $script:communityOperationTimer = New-Object System.Windows.Forms.Timer
+    $script:communityOperationTimer.Interval = 200
+    $script:communityOperationTimer.Add_Tick({
+        $operation = $script:communityOperation
+        if (-not $operation) {
+            $script:communityOperationTimer.Stop()
+            return
+        }
+        if ([DateTime]::UtcNow -gt $operation.DeadlineUtc) {
+            try { if (-not $operation.Process.HasExited) { $operation.Process.Kill() } } catch {}
+            Set-CommunityStatus "留言板请求超时，请稍后重试。" "Community request timed out. Please try again."
+        }
+        if ($operation.Process.HasExited) {
+            $script:communityOperationTimer.Stop()
+            Complete-CommunityOperation
+        }
+    })
+}
+
+function Start-CommunityOperation([ValidateSet("List", "Post")][string]$action) {
+    if ($script:communityOperation) { return }
+    if (-not (Test-Path -LiteralPath $script:communityClientPath)) {
+        Set-CommunityStatus "安装缺少留言板客户端文件。" "The community client file is missing."
+        return
+    }
+
+    $nickname = ""
+    $requestPath = ""
+    if ($action -eq "Post") {
+        if (-not $script:communityBoardOpen) {
+            Set-CommunityIdleStatus
+            return
+        }
+        $nickname = $communityNicknameBox.Text.Trim()
+        $message = $communityMessageBox.Text.Trim()
+        if (-not $nickname -or -not $message) {
+            Set-CommunityStatus "请填写昵称和留言内容。" "Enter a nickname and message."
+            return
+        }
+        if ($nickname.Length -gt 24 -or $message.Length -gt 500) {
+            Set-CommunityStatus "昵称最多 24 字，留言最多 500 字。" "Nickname: 24 characters; message: 500 characters maximum."
+            return
+        }
+    }
+
+    try {
+        $requestDirectory = Join-Path ([System.IO.Path]::GetTempPath()) "G1RModCommunity"
+        [System.IO.Directory]::CreateDirectory($requestDirectory) | Out-Null
+        $requestId = [Guid]::NewGuid().ToString("N")
+        $responsePath = Join-Path $requestDirectory "$requestId.response.json"
+        if ($action -eq "Post") {
+            $requestPath = Join-Path $requestDirectory "$requestId.request.json"
+            $request = @{ nickname = $nickname; message = $message }
+            if ($script:communityReplyToId -gt 0) {
+                $request.reply_to_id = $script:communityReplyToId
+            }
+            $requestJson = $request | ConvertTo-Json -Compress
+            [System.IO.File]::WriteAllText($requestPath, $requestJson, [System.Text.UTF8Encoding]::new($false))
+        }
+
+        $escapedClient = $script:communityClientPath.Replace('"', '\"')
+        $escapedResponse = $responsePath.Replace('"', '\"')
+        $arguments = '-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{0}" -Action {1} -ResponseFile "{2}"' -f $escapedClient, $action, $escapedResponse
+        if ($requestPath) {
+            $arguments += ' -RequestFile "{0}"' -f $requestPath.Replace('"', '\"')
+        }
+        $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+        $startInfo.FileName = "powershell.exe"
+        $startInfo.Arguments = $arguments
+        $startInfo.UseShellExecute = $false
+        $startInfo.CreateNoWindow = $true
+        $startInfo.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Hidden
+        $startInfo.RedirectStandardOutput = $true
+        $startInfo.RedirectStandardError = $true
+        $process = New-Object System.Diagnostics.Process
+        $process.StartInfo = $startInfo
+        if (-not $process.Start()) { throw "Unable to start community client." }
+
+        $script:communityOperation = [pscustomobject]@{
+            Action = $action
+            Process = $process
+            RequestPath = $requestPath
+            ResponsePath = $responsePath
+            Nickname = $nickname
+            ReplyToId = $script:communityReplyToId
+            DeadlineUtc = [DateTime]::UtcNow.AddSeconds(8)
+        }
+        Set-CommunityControlsEnabled $false
+        if ($action -eq "Post") {
+            Set-CommunityStatus "正在发布留言..." "Posting message..."
+        } else {
+            Set-CommunityStatus "正在刷新留言..." "Refreshing messages..."
+        }
+        Ensure-CommunityOperationTimer
+        $script:communityOperationTimer.Start()
+    } catch {
+        Remove-CommunityTempFiles @($requestPath, $responsePath)
+        Set-CommunityControlsEnabled $true
+        Set-CommunityStatus ("留言板启动失败：{0}" -f $_.Exception.Message) ("Unable to start community client: {0}" -f $_.Exception.Message)
+    }
+}
+
 $font = New-Object System.Drawing.Font("Microsoft YaHei UI", 10)
 $script:uiEnglishFont = New-Object System.Drawing.Font("Segoe UI", 9)
 $script:uiButtonFontCache = @{}
@@ -3767,6 +4098,144 @@ $walkthroughTab.Text = "流程攻略"
 
 $guideTab = New-Object System.Windows.Forms.TabPage
 $guideTab.Text = "操作指南"
+
+$communityTab = New-Object System.Windows.Forms.TabPage
+$communityTab.Text = "玩家留言板"
+
+$communityLayoutPanel = New-Object System.Windows.Forms.TableLayoutPanel
+$communityLayoutPanel.Dock = "Fill"
+$communityLayoutPanel.Padding = New-Object System.Windows.Forms.Padding(12)
+$communityLayoutPanel.ColumnCount = 1
+$communityLayoutPanel.RowCount = 5
+$communityLayoutPanel.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100))) | Out-Null
+$communityLayoutPanel.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 44))) | Out-Null
+$communityLayoutPanel.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 28))) | Out-Null
+$communityLayoutPanel.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100))) | Out-Null
+$communityLayoutPanel.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 126))) | Out-Null
+$communityLayoutPanel.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 132))) | Out-Null
+
+$communityTopPanel = New-Object System.Windows.Forms.FlowLayoutPanel
+$communityTopPanel.Dock = "Fill"
+$communityTopPanel.WrapContents = $false
+$communityRefreshButton = New-Object System.Windows.Forms.Button
+$communityRefreshButton.Text = "刷新留言"
+$communityRefreshButton.Width = 100
+$communityRefreshButton.Height = 32
+$communityRefreshButton.Margin = New-Object System.Windows.Forms.Padding(0, 0, 10, 0)
+$communityOpenWebButton = New-Object System.Windows.Forms.Button
+$communityOpenWebButton.Text = "打开网页版"
+$communityOpenWebButton.Width = 120
+$communityOpenWebButton.Height = 32
+$communityOpenWebButton.Margin = New-Object System.Windows.Forms.Padding(0, 0, 10, 0)
+$communityReplyButton = New-Object System.Windows.Forms.Button
+$communityReplyButton.Text = "回复所选"
+$communityReplyButton.Width = 100
+$communityReplyButton.Height = 32
+$communityReplyButton.Margin = New-Object System.Windows.Forms.Padding(0, 0, 10, 0)
+$communityCancelReplyButton = New-Object System.Windows.Forms.Button
+$communityCancelReplyButton.Text = "取消回复"
+$communityCancelReplyButton.Width = 90
+$communityCancelReplyButton.Height = 32
+$communityCancelReplyButton.Enabled = $false
+$communityCancelReplyButton.Margin = New-Object System.Windows.Forms.Padding(0, 0, 10, 0)
+$communityStatsLabel = New-Object System.Windows.Forms.Label
+$communityStatsLabel.Text = "安装人数 0 | 留言 0"
+$communityStatsLabel.AutoSize = $true
+$communityStatsLabel.Margin = New-Object System.Windows.Forms.Padding(10, 9, 0, 0)
+$communityStatusLabel = New-Object System.Windows.Forms.Label
+$communityStatusLabel.Text = $script:communityStatusZh
+$communityStatusLabel.AutoSize = $true
+$communityStatusLabel.Margin = New-Object System.Windows.Forms.Padding(18, 9, 0, 0)
+$communityTopPanel.Controls.AddRange(@(
+    $communityRefreshButton,
+    $communityOpenWebButton,
+    $communityReplyButton,
+    $communityCancelReplyButton,
+    $communityStatsLabel,
+    $communityStatusLabel
+))
+
+$communityNoticeLabel = New-Object System.Windows.Forms.Label
+$communityNoticeLabel.Text = "公开留言对所有玩家可见，管理员可在服务器查看和回复；请勿填写隐私信息。"
+$communityNoticeLabel.AutoSize = $true
+$communityNoticeLabel.Dock = "Fill"
+
+$communityListView = New-Object System.Windows.Forms.ListView
+$communityListView.Dock = "Fill"
+$communityListView.View = "Details"
+$communityListView.FullRowSelect = $true
+$communityListView.GridLines = $true
+$communityListView.HideSelection = $false
+$communityListView.ShowItemToolTips = $true
+$communityListView.MultiSelect = $false
+$communityListView.Columns.Add("称谓", 150) | Out-Null
+$communityListView.Columns.Add("回复对象", 170) | Out-Null
+$communityListView.Columns.Add("留言内容", 470) | Out-Null
+$communityListView.Columns.Add("时间", 160) | Out-Null
+$script:communityAdminFont = New-Object System.Drawing.Font($communityListView.Font, [System.Drawing.FontStyle]::Bold)
+
+$communityDetailGroup = New-Object System.Windows.Forms.GroupBox
+$communityDetailGroup.Text = "留言详情"
+$communityDetailGroup.Dock = "Fill"
+$communityDetailGroup.Padding = New-Object System.Windows.Forms.Padding(8, 20, 8, 8)
+$communityDetailBox = New-Object System.Windows.Forms.TextBox
+$communityDetailBox.Dock = "Fill"
+$communityDetailBox.Multiline = $true
+$communityDetailBox.ReadOnly = $true
+$communityDetailBox.WordWrap = $true
+$communityDetailBox.ScrollBars = "Vertical"
+$communityDetailBox.Text = "选择一条留言查看完整内容。"
+$communityDetailGroup.Controls.Add($communityDetailBox)
+
+$communityComposer = New-Object System.Windows.Forms.TableLayoutPanel
+$communityComposer.Dock = "Fill"
+$communityComposer.Padding = New-Object System.Windows.Forms.Padding(4, 8, 4, 4)
+$communityComposer.ColumnCount = 3
+$communityComposer.RowCount = 2
+$communityComposer.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Absolute, 90))) | Out-Null
+$communityComposer.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100))) | Out-Null
+$communityComposer.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Absolute, 145))) | Out-Null
+$communityComposer.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 34))) | Out-Null
+$communityComposer.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100))) | Out-Null
+
+$communityNicknameLabel = New-Object System.Windows.Forms.Label
+$communityNicknameLabel.Text = "玩家昵称"
+$communityNicknameLabel.AutoSize = $true
+$communityNicknameLabel.Anchor = "Left"
+$communityNicknameBox = New-Object System.Windows.Forms.TextBox
+$communityNicknameBox.MaxLength = 24
+$communityNicknameBox.Dock = "Fill"
+$communityNicknameBox.Margin = New-Object System.Windows.Forms.Padding(0, 3, 12, 3)
+$communityMessageLabel = New-Object System.Windows.Forms.Label
+$communityMessageLabel.Text = "留言内容"
+$communityMessageLabel.AutoSize = $true
+$communityMessageLabel.Anchor = "Left"
+$communityMessageBox = New-Object System.Windows.Forms.TextBox
+$communityMessageBox.Multiline = $true
+$communityMessageBox.MaxLength = 500
+$communityMessageBox.ScrollBars = "Vertical"
+$communityMessageBox.Dock = "Fill"
+$communityMessageBox.Margin = New-Object System.Windows.Forms.Padding(0, 3, 12, 3)
+$communityPostButton = New-Object System.Windows.Forms.Button
+$communityPostButton.Text = "发布留言"
+$communityPostButton.Width = 125
+$communityPostButton.Height = 32
+$communityPostButton.Dock = "Top"
+$communityPostButton.Margin = New-Object System.Windows.Forms.Padding(4, 4, 4, 0)
+
+$communityComposer.Controls.Add($communityNicknameLabel, 0, 0)
+$communityComposer.Controls.Add($communityNicknameBox, 1, 0)
+$communityComposer.SetColumnSpan($communityNicknameBox, 2)
+$communityComposer.Controls.Add($communityMessageLabel, 0, 1)
+$communityComposer.Controls.Add($communityMessageBox, 1, 1)
+$communityComposer.Controls.Add($communityPostButton, 2, 1)
+
+$communityLayoutPanel.Controls.Add($communityTopPanel, 0, 0)
+$communityLayoutPanel.Controls.Add($communityNoticeLabel, 0, 1)
+$communityLayoutPanel.Controls.Add($communityListView, 0, 2)
+$communityLayoutPanel.Controls.Add($communityDetailGroup, 0, 3)
+$communityLayoutPanel.Controls.Add($communityComposer, 0, 4)
+$communityTab.Controls.Add($communityLayoutPanel)
 
 $topPanel = New-Object System.Windows.Forms.Panel
 $topPanel.Dock = "Top"
@@ -5329,6 +5798,19 @@ $script:uiTextEn = @{
     "日志/诊断" = "Logs / Diagnostics"
     "流程攻略" = "Walkthrough"
     "操作指南" = "User Guide"
+    "玩家留言板" = "Community Board"
+    "刷新留言" = "Refresh"
+    "打开网页版" = "Open Web Board"
+    "回复所选" = "Reply Selected"
+    "取消回复" = "Cancel Reply"
+    "公开留言对所有玩家可见，管理员可在服务器查看和回复；请勿填写隐私信息。" = "Messages are public. The administrator can view and reply on the server; do not include private information."
+    "称谓" = "Name"
+    "回复对象" = "Reply To"
+    "留言内容" = "Message"
+    "留言详情" = "Full Message"
+    "时间" = "Time"
+    "玩家昵称" = "Player Nickname"
+    "发布留言" = "Post Message"
     "搜索" = "Search"
     "检索" = "Filter"
     "保存名称" = "Node Name"
@@ -5747,6 +6229,11 @@ function Apply-UiLanguage([string]$language) {
     Refresh-ItemCategories
     Refresh-ItemList
     Refresh-NpcScanViews
+    if ($communityStatusLabel) {
+        $communityStatusLabel.Text = if ($script:uiLanguage -eq "en") { $script:communityStatusEn } else { $script:communityStatusZh }
+    }
+    Update-CommunityMessageDetail
+    Update-CommunityStatsText
     if ($languageButton) {
         $languageButton.Text = if ($script:uiLanguage -eq "en") { "中文" } else { "English" }
     }
@@ -5851,10 +6338,38 @@ $tabs.TabPages.Add($npcScanTab) | Out-Null
 $tabs.TabPages.Add($worldTimeTab) | Out-Null
 $tabs.TabPages.Add($diagTab) | Out-Null
 # $tabs.TabPages.Add($walkthroughTab) | Out-Null  # Gothic 版暂无攻略文件，暂时隐藏
+$tabs.TabPages.Add($communityTab) | Out-Null
 $tabs.TabPages.Add($guideTab) | Out-Null
 $form.Controls.Add($rootLayoutPanel)
 Apply-UiTheme $script:currentThemeName
 Apply-UiLanguage "zh"
+Load-CommunityNickname
+
+$communityRefreshButton.Add_Click({
+    Start-CommunityOperation "List"
+})
+$communityPostButton.Add_Click({
+    Start-CommunityOperation "Post"
+})
+$communityReplyButton.Add_Click({
+    Set-CommunityReplyFromSelection
+})
+$communityCancelReplyButton.Add_Click({
+    Clear-CommunityReply
+})
+$communityListView.Add_SelectedIndexChanged({
+    Update-CommunityMessageDetail
+})
+$communityListView.Add_DoubleClick({
+    Set-CommunityReplyFromSelection
+})
+$communityOpenWebButton.Add_Click({
+    try {
+        Start-Process "https://gothic.1223344.xyz/"
+    } catch {
+        Set-CommunityStatus ("无法打开网页版：{0}" -f $_.Exception.Message) ("Unable to open the web board: {0}" -f $_.Exception.Message)
+    }
+})
 
 $searchBox.Add_TextChanged({ Refresh-SpotList })
 
@@ -6707,6 +7222,12 @@ $form.Add_FormClosed({
     if ($script:focusHighlightStatusTimer) { $script:focusHighlightStatusTimer.Stop(); $script:focusHighlightStatusTimer.Dispose() }
     if ($script:uiControlTimer) { $script:uiControlTimer.Stop(); $script:uiControlTimer.Dispose() }
     if ($script:npcPullTimer) { $script:npcPullTimer.Stop(); $script:npcPullTimer.Dispose() }
+    if ($script:communityOperationTimer) { $script:communityOperationTimer.Stop(); $script:communityOperationTimer.Dispose() }
+    if ($script:communityAdminFont) { $script:communityAdminFont.Dispose() }
+    if ($script:communityOperation -and $script:communityOperation.Process) {
+        try { if (-not $script:communityOperation.Process.HasExited) { $script:communityOperation.Process.Kill() } } catch {}
+        try { $script:communityOperation.Process.Dispose() } catch {}
+    }
     Clear-UiActiveFlag
     Clear-UiControlFile
     if ($script:singletonAcquired) { $script:singletonMutex.ReleaseMutex() }

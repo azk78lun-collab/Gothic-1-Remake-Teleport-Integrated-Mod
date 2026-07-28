@@ -1,6 +1,7 @@
 ﻿[CmdletBinding()]
 param(
     [string]$GameWin64Directory = '',
+    [switch]$DisableInstallTelemetry,
     [switch]$NoPause
 )
 
@@ -184,6 +185,22 @@ try {
         }
     }
     Write-Host '  - [配置] 已合并 V4 稳定版 mods.txt 加载列表 ... 成功' -ForegroundColor Green
+
+    if (-not $DisableInstallTelemetry -and $env:G1R_MOD_DISABLE_TELEMETRY -ne '1') {
+        Write-Host '  - [统计] 正在发送匿名安装事件（仅随机编号与版本，不含用户名、路径、硬件或存档）...' -ForegroundColor DarkGray
+        try {
+            $communityClient = Join-Path $targetMods 'TeleportModUIExternal\CommunityClient.ps1'
+            if (Test-Path -LiteralPath $communityClient) {
+                & powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass `
+                    -File $communityClient -Action Install -Version '4.1.0' -Quiet | Out-Null
+                Write-Host '  - [统计] 匿名安装统计已处理；网络不可用不会影响安装。' -ForegroundColor DarkGray
+            }
+        } catch {
+            Write-Host '  - [统计] 服务器暂不可用，已跳过；安装不受影响。' -ForegroundColor DarkGray
+        }
+    } else {
+        Write-Host '  - [统计] 已按本机设置停用匿名安装统计。' -ForegroundColor DarkGray
+    }
 
     Write-Host ''
     Write-Host 'V4 一键安装完成！进入游戏后按 F6 打开管理界面。' -ForegroundColor Green

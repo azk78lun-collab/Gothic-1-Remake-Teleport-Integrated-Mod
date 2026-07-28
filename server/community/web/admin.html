@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>G1R Community Admin / 留言板管理</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <p class="eyebrow">G1R Community Administration</p>
+      <h1>Admin Console <span>/ 管理员后台</span></h1>
+    </header>
+
+    <section id="login-panel" class="composer">
+      <label for="token">Administrator token / 管理员令牌</label>
+      <input id="token" type="password" autocomplete="current-password">
+      <div class="composer-actions">
+        <span id="login-status" role="status"></span>
+        <button id="login" type="button">Sign in / 登录</button>
+      </div>
+    </section>
+
+    <div id="admin-panel" hidden>
+      <section class="stats">
+        <div><strong id="unique-installs">—</strong><span>unique installs / 安装人数</span></div>
+        <div><strong id="install-events">—</strong><span>install events / 安装次数</span></div>
+        <div><strong id="message-count">—</strong><span>messages / 留言</span></div>
+      </section>
+
+      <section class="admin-controls">
+        <strong id="admin-board-state">Board state / 留言板状态</strong>
+        <div>
+          <button id="toggle-board" class="secondary" type="button"></button>
+          <button id="clear-all" class="danger" type="button">Clear all messages / 清空全部留言</button>
+        </div>
+      </section>
+
+      <section class="composer">
+        <h2>Post as 管理员</h2>
+        <div id="admin-reply-context" class="reply-context" hidden>
+          <span id="admin-reply-target"></span>
+          <button id="admin-cancel-reply" class="secondary compact" type="button">Cancel reply / 取消回复</button>
+        </div>
+        <textarea id="admin-message" maxlength="500" rows="4"></textarea>
+        <div class="composer-actions">
+          <span id="admin-status" role="status"></span>
+          <button id="admin-post" type="button">Post / 发布</button>
+        </div>
+      </section>
+
+      <section class="board">
+        <div class="section-head">
+          <h2>Moderation / 留言管理</h2>
+          <button id="admin-refresh" class="secondary" type="button">Refresh / 刷新</button>
+        </div>
+        <div id="admin-messages" class="messages"></div>
+      </section>
+    </div>
+  </main>
+  <script src="/assets/admin.js" defer></script>
+</body>
+</html>
