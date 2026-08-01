@@ -16,6 +16,20 @@ This is an unofficial community project and is not affiliated with the game deve
 - [Chinese Video Demo (Bilibili)](https://www.bilibili.com/video/BV1mbLf6HEEV)
 - [Mod Page (Nexus Mods)](https://www.nexusmods.com/gothic1remake/mods/536)
 
+### Teleport Lite / 纯瞬移轻量版
+
+`Teleport Lite` is a separate, teleport-only Nexus test build. It keeps the
+native bilingual teleport UI, 108 destinations, manual coordinates, custom
+nodes, and Numpad bindings while omitting the integrated mod's external EXEs,
+PowerShell UI, flight, item, NPC, unlocking, highlighting, and network tools.
+
+Its standalone source is in [subprojects/TeleportLite](subprojects/TeleportLite)
+and its download is published as the `v4.1.0-teleport-lite.1` pre-release.
+
+`Teleport Lite` 是独立的纯瞬移测试版，保留中英文原生瞬移 UI、108 个地点、
+手动坐标、自定义节点和小键盘绑定；不包含整合版的外部 EXE、PowerShell 界面、
+自由飞行、物品、人物、开锁、高亮或网络工具。
+
 ### Features
 
 - Teleport nodes, manual coordinates, saved-node import/export, and teleporting to scanned characters.

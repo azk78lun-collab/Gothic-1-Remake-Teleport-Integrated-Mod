@@ -1,5 +1,14 @@
 # Changelog / 更新日志
 
+## v4.1.0-teleport-lite.1
+
+- Added the standalone Teleport Lite source under `subprojects/TeleportLite`.
+- Published the teleport-only Nexus test package with 108 bilingual nodes,
+  native F6 UI, manual coordinates, custom nodes, and Numpad bindings.
+- The Lite package requires UE4SS separately and deliberately contains no
+  external EXE, PowerShell, flight, item, NPC, unlocking, highlighting, or
+  network functionality.
+
 ## v4.0.0
 
 - Initial public source release.
@@ -13,4 +22,3 @@
 - 明确说明首次 UI 启动等待时间和瞬移后走一步刷新的操作。
 - 发布稳定的 F6/F7 界面与自由飞行、瞬移、人物扫描与拉取、物品/背包、开锁和高亮功能。
 - 公开项目不包含已经废弃的犯罪、仇恨及离线存档修改实验。
-

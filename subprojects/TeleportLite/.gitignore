@@ -1,0 +1,21 @@
+# Native build and local package outputs
+/build/
+/dist/
+/smoke_runtime/
+
+# Locally generated Nexus media variants
+/assets/nexus-teleport-demo-optimized*.gif
+
+# Runtime files generated next to the game executable
+/TeleportLite_nodes.tsv
+/TeleportLite_hotkeys.tsv
+/TeleportLite_settings.ini
+/TeleportLite_status.txt
+/TeleportLite_native_diag.txt
+
+# Editor and OS files
+.vs/
+*.user
+*.suo
+Thumbs.db
+Desktop.ini
